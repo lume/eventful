@@ -1,6 +1,6 @@
 {
 	"name": "@lume/eventful",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"description": "Emit and subscribe to events.",
 	"author": "Joe Pea <joe@trusktr.io>",
 	"license": "MIT",
