@@ -1,0 +1,68 @@
+{
+	"name": "@lume/eventful",
+	"version": "0.0.0",
+	"description": "Emit and subscribe to events.",
+	"author": "Joe Pea <joe@trusktr.io>",
+	"license": "MIT",
+	"homepage": "http://github.com/lume/eventful#readme",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "src/index.ts",
+	"exports COMMENT:": "This removes 'dist' from import statements, as well as replaces the 'main' field. See https://github.com/nodejs/node/issues/14970#issuecomment-571887546",
+	"exports": {
+		".": "./dist/index.js",
+		"./": "./dist/"
+	},
+	"scripts": {
+		"LUME SCRIPTS XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX": "",
+		"clean": "lume clean",
+		"build": "lume build",
+		"dev": "lume dev",
+		"typecheck": "lume typecheck",
+		"typecheck:watch": "lume typecheckWatch",
+		"test": "lume test",
+		"test:debug": "lume testDebug",
+		"prettier": "lume prettier",
+		"prettier:check": "lume prettierCheck",
+		"release:patch": "lume releasePatch",
+		"release:minor": "lume releaseMinor",
+		"release:major": "lume releaseMajor",
+		"version": "lume versionHook",
+		"postversion": "lume postVersionHook",
+		"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX OTHER SCRIPTS": ""
+	},
+	"dependencies": {
+		"lowclass": "^4.9.0"
+	},
+	"devDependencies": {
+		"@lume/cli": "^2.0.0",
+		"prettier": "^1.19.1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/lume/eventful.git"
+	},
+	"bugs": {
+		"url": "https://github.com/lume/eventful/issues"
+	},
+	"keywords": [
+		"events",
+		"listeners",
+		"emitters",
+		"eventemitter",
+		"event-emitter",
+		"eventdispatcher",
+		"event-dispatcher",
+		"event-driven",
+		"event-handler",
+		"eventhandler",
+		"pub-sub",
+		"pub/sub",
+		"pubsub",
+		"publish",
+		"subscribe",
+		"observer",
+		"observer-pattern",
+		"broadcast"
+	]
+}
