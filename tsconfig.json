@@ -1,6 +1,7 @@
 {
 	"extends": "./node_modules/@lume/cli/config/ts.config.json",
 	"compilerOptions": {
-		"declaration": false // TODO, set back to true after removing class-factory mixins
+		"declaration": false, // TODO, set back to true after removing class-factory mixins
+		"declarationMap": false
 	}
 }
