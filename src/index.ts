@@ -1,3 +1,3 @@
-export * from './Eventful'
+export * from './Eventful.js'
 
 export const version = '0.1.0'

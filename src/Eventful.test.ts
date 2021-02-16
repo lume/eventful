@@ -1,4 +1,4 @@
-import Eventful from './Eventful'
+import Eventful from './Eventful.js'
 
 let eventCount = 0
 let eventCount2 = 0
