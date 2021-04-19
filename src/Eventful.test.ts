@@ -1,4 +1,4 @@
-import Eventful from './Eventful.js'
+import {Eventful} from './Eventful.js'
 
 let eventCount = 0
 let eventCount2 = 0
@@ -6,7 +6,8 @@ let eventCount2 = 0
 describe('Eventful', () => {
 	describe('provides an event pattern', () => {
 		it('triggers an event handler based on event names', () => {
-			const o = new Eventful()
+            const MyClass = Eventful()
+			const o = new MyClass()
 
 			const eventHandler = () => {
 				eventCount += 1
@@ -92,7 +93,8 @@ describe('Eventful', () => {
 		})
 
 		it('passes event payloads to event handlers', () => {
-			const o = new Eventful()
+            class MyClass extends Eventful() {}
+			const o = new MyClass()
 
 			let thePayload: string | number | undefined
 			let thePayload2: number | undefined
@@ -128,7 +130,8 @@ describe('Eventful', () => {
 		})
 
 		it('allows callbacks to be paired with contexts with which to be called', () => {
-			const o = new Eventful()
+            class MyClass extends Eventful() {}
+			const o = new MyClass()
 
 			let obj = {n: 0}
 			const o1 = {}
@@ -175,5 +178,32 @@ describe('Eventful', () => {
 
 			expect(obj.n).toBe(4)
 		})
+
+		it('allows us to check objects are instances of the mixin class or composed classes', () => {
+            const MyClass = Eventful()
+            class OtherClass extends Eventful() {}
+            class AnotherClass extends Eventful(Array) {}
+
+            let o = new MyClass
+            expect(o).toBeInstanceOf(Eventful)
+            expect(o).toBeInstanceOf(MyClass)
+            expect(o).not.toBeInstanceOf(OtherClass)
+            expect(o).not.toBeInstanceOf(AnotherClass)
+            expect(o).not.toBeInstanceOf(Array)
+
+            o = new OtherClass
+            expect(o).toBeInstanceOf(Eventful)
+            expect(o).not.toBeInstanceOf(MyClass)
+            expect(o).toBeInstanceOf(OtherClass)
+            expect(o).not.toBeInstanceOf(AnotherClass)
+            expect(o).not.toBeInstanceOf(Array)
+
+            o = new AnotherClass
+            expect(o).toBeInstanceOf(Eventful)
+            expect(o).not.toBeInstanceOf(MyClass)
+            expect(o).not.toBeInstanceOf(OtherClass)
+            expect(o).toBeInstanceOf(AnotherClass)
+            expect(o).toBeInstanceOf(Array)
+        })
 	})
 })

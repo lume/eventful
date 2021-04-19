@@ -7,7 +7,7 @@
 	"homepage": "http://github.com/lume/eventful#readme",
 	"type": "module",
 	"main": "dist/index.js",
-	"types": "src/index.ts",
+	"types": "dist/index.d.ts",
 	"exports COMMENT:": "This removes 'dist' from import statements, as well as replaces the 'main' field. See https://github.com/nodejs/node/issues/14970#issuecomment-571887546",
 	"exports": {
 		".": "./dist/index.js",
@@ -35,8 +35,8 @@
 		"lowclass": "^4.9.0"
 	},
 	"devDependencies": {
-		"@lume/cli": "^0.3.0",
-		"prettier": "^1.19.1"
+		"@lume/cli": "^0.5.0",
+		"prettier": "^2.0.0"
 	},
 	"repository": {
 		"type": "git",

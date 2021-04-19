@@ -1,16 +1,17 @@
-import {Mixin, MixinResult, Constructor} from 'lowclass'
+import type {Constructor} from 'lowclass'
 
-// TODO @trusktr, make strongly typed event args. Combine with stuff in Events.ts (or similar).
+// TODO, make strongly typed event args. Combine with stuff in Events.ts (or similar).
 
-// TODO @trusktr, Make sure emit will not attempt to call event handlers removed
+// TODO, Make sure emit will not attempt to call event handlers removed
 // during emit (in place modification of listeners array during emit iteration
 // will try to access undefined after the end of the array). Possibly use
 // for..of with a Set instead, otherwise modify the iteration index manually.
 
-// TODO @trusktr, an option to defer events, and batch them (so that 3 of the
+// TODO, an option to defer events, and batch them (so that 3 of the
 // same event and payload triggers only one event instead of three)
 
 /**
+ * @mixin
  * @class Eventful - An instance of Eventful emits events that code can
  * subscribe to with callbacks. Events may optionally pass a payload to the
  * callbacks.
@@ -41,12 +42,10 @@ import {Mixin, MixinResult, Constructor} from 'lowclass'
  * rectangle.off("resize", onResize)
  * ```
  */
-export const Eventful = Mixin(EventfulMixin)
-export interface Eventful extends InstanceType<typeof Eventful> {}
-export default Eventful
+export function Eventful<T extends Constructor>(Base: T = Object as any) {
+	class Eventful extends Base {
+		[isEventful] = isEventful
 
-export function EventfulMixin<T extends Constructor>(Base: T) {
-	class Eventful extends Constructor(Base) {
 		/**
 		 * @method on - Register a `callback` to be executed any
 		 * time an event with name `eventName` is triggered by an instance of
@@ -60,13 +59,13 @@ export function EventfulMixin<T extends Constructor>(Base: T) {
 		 * @param {any} context - An optional context to call the callback with. Passing no context is the same as subscribing `callback` for a `context` of `undefined`.
 		 */
 		on(eventName: string, callback: Function, context?: any) {
-			let eventMap = this.__eventMap
+			let eventMap = this.#eventMap
 
 			// @prod-prune
 			if (typeof callback !== 'function')
 				throw new Error('Expected a function in callback argument of Eventful#on.')
 
-			if (!eventMap) eventMap = this.__eventMap = new Map()
+			if (!eventMap) eventMap = this.#eventMap = new Map()
 
 			let callbacks = eventMap.get(eventName)
 
@@ -85,7 +84,7 @@ export function EventfulMixin<T extends Constructor>(Base: T) {
 		 * @param {any} context - A context associated with `callback`. Not passing a `context` arg is equivalent to unsubscribing the `callback` for `context` of `undefined`.
 		 */
 		off(eventName: string, callback?: Function, context?: any) {
-			const eventMap = this.__eventMap
+			const eventMap = this.#eventMap
 
 			if (!eventMap) return
 
@@ -101,7 +100,7 @@ export function EventfulMixin<T extends Constructor>(Base: T) {
 
 			if (callbacks.length === 0) eventMap.delete(eventName)
 
-			if (eventMap.size === 0) this.__eventMap = null
+			if (eventMap.size === 0) this.#eventMap = null
 		}
 
 		/**
@@ -120,7 +119,7 @@ export function EventfulMixin<T extends Constructor>(Base: T) {
 		 * @param {data} any - The data that is passed to each callback subscribed to the event.
 		 */
 		emit(eventName: string, data?: any) {
-			const eventMap = this.__eventMap
+			const eventMap = this.#eventMap
 
 			if (!eventMap) return
 
@@ -140,11 +139,23 @@ export function EventfulMixin<T extends Constructor>(Base: T) {
 			}
 		}
 
-		private __eventMap: Map<string, Array<[Function, any]>> | null = null
+		#eventMap: Map<string, Array<[Function, any]>> | null = null
 	}
 
-	return Eventful as MixinResult<typeof Eventful, T>
+	Eventful.prototype[isEventful] = isEventful
+
+	return Eventful
 }
+
+const isEventful = Symbol('isEventful')
+
+Object.defineProperty(Eventful, Symbol.hasInstance, {
+	value(obj: any): boolean {
+		if (!obj || typeof obj !== 'object') return false
+		if (!(isEventful in obj)) return false
+		return true
+	},
+})
 
 /**
  * @decorator
@@ -171,7 +182,7 @@ function _emits(prototype: any, propName: string, descriptor: PropertyDescriptor
 	if (!(prototype instanceof Eventful))
 		throw new TypeError('The @emits decorator in only for use on properties of classes that extend from Eventful.')
 
-	const vName = 'emits_' + propName
+	const vName = Symbol('@emits: ' + propName)
 
 	// property decorators are not passed a descriptor (unlike decorators on accessors or methods)
 	let calledAsPropertyDecorator = false
@@ -226,7 +237,7 @@ function _emits(prototype: any, propName: string, descriptor: PropertyDescriptor
 	}
 
 	let initialValueIsSet = false
-	function emitEvent(this: Eventful) {
+	function emitEvent(this: EventfulInstance) {
 		this.emit(eventName, propName)
 	}
 
@@ -257,7 +268,7 @@ function _emits(prototype: any, propName: string, descriptor: PropertyDescriptor
 						originalSet!.call(this, newValue)
 
 						// TODO should we defer the event, or not? Perhaps provide an option, and defer by default.
-						Promise.resolve().then(emitEvent.bind(this as Eventful))
+						Promise.resolve().then(emitEvent.bind(this as EventfulInstance))
 						// emitEvent.call(this as Eventful)
 					},
 			  }
@@ -265,7 +276,7 @@ function _emits(prototype: any, propName: string, descriptor: PropertyDescriptor
 					set(newValue: any) {
 						if (!initialValueIsSet) initialValueIsSet = true
 						;(this as any)[vName] = newValue
-						Promise.resolve().then(emitEvent.bind(this as Eventful))
+						Promise.resolve().then(emitEvent.bind(this as EventfulInstance))
 					},
 			  }),
 	}
@@ -279,3 +290,5 @@ function _emits(prototype: any, propName: string, descriptor: PropertyDescriptor
 	// Weird, huh?
 	// This will all change with updates to the ES decorators proposal, https://github.com/tc39/proposal-decorators
 }
+
+type EventfulInstance = InstanceType<ReturnType<typeof Eventful>>
