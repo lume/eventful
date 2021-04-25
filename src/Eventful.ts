@@ -44,10 +44,8 @@ import type {Constructor} from 'lowclass'
  */
 export function Eventful<T extends Constructor>(Base: T = Object as any) {
 	class Eventful extends Base {
-		constructor(...args: any[]) {
-			super(...args)
-			instances.add(this)
-		}
+		// @ts-ignore to avoid "is using private name" errors in consumer code.
+		[isEventful as any] = isEventful as any
 
 		/**
 		 * @method on - Register a `callback` to be executed any
@@ -145,18 +143,18 @@ export function Eventful<T extends Constructor>(Base: T = Object as any) {
 		#eventMap: Map<string, Array<[Function, any]>> | null = null
 	}
 
-	instances.add(Eventful.prototype)
+	Eventful.prototype[isEventful] = isEventful
 
 	return Eventful
 }
 
-const instances = new WeakSet<EventfulInstance>()
+const isEventful = Symbol('isEventful')
 
 Object.defineProperty(Eventful, Symbol.hasInstance, {
 	value(obj: any): boolean {
-		if (!obj || typeof obj !== 'object') return false
-		if (!instances.has(obj)) return false
-		return true
+		if (!obj) return false
+		if (obj[isEventful]) return true
+		return false
 	},
 })
 
