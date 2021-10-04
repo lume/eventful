@@ -181,7 +181,7 @@ export function emits(eventName: string): any {
 
 function _emits(prototype: any, propName: string, descriptor: PropertyDescriptor | undefined, eventName: string): any {
 	if (!(prototype instanceof Eventful))
-		throw new TypeError('The @emits decorator in only for use on properties of classes that extend from Eventful.')
+		throw new TypeError('The @emits decorator is only for use on properties of classes that extend from Eventful.')
 
 	const vName = Symbol('@emits: ' + propName)
 
