@@ -63,8 +63,7 @@ export function Eventful<T extends Constructor>(Base: T = Object as any) {
 			let eventMap = this.#eventMap
 
 			// @prod-prune
-			if (typeof callback !== 'function')
-				throw new Error('Expected a function in callback argument of Eventful#on.')
+			if (typeof callback !== 'function') throw new Error('Expected a function in callback argument of Eventful#on.')
 
 			if (!eventMap) eventMap = this.#eventMap = new Map()
 
