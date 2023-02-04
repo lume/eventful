@@ -23,7 +23,7 @@ class Dog extends Eventful {
 		this.emit('hungry')
 	}
 
-	eat(food) {
+	feed(food) {
 		// ... dog eats food ...
 	}
 }
