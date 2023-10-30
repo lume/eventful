@@ -1,35 +1,25 @@
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
 export function Eventful(Base = Object) {
-    var _Eventful_eventMap, _a;
+    var _a;
     class Eventful extends Base {
         constructor() {
             super(...arguments);
             this[_a] = isEventful;
-            _Eventful_eventMap.set(this, null);
+            this.#eventMap = null;
         }
+        static { _a = isEventful; }
         on(eventName, callback, context) {
-            let eventMap = __classPrivateFieldGet(this, _Eventful_eventMap, "f");
+            let eventMap = this.#eventMap;
             if (typeof callback !== 'function')
                 throw new Error('Expected a function in callback argument of Eventful#on.');
             if (!eventMap)
-                eventMap = __classPrivateFieldSet(this, _Eventful_eventMap, new Map(), "f");
+                eventMap = this.#eventMap = new Map();
             let callbacks = eventMap.get(eventName);
             if (!callbacks)
                 eventMap.set(eventName, (callbacks = []));
             callbacks.push([callback, context]);
         }
         off(eventName, callback, context) {
-            const eventMap = __classPrivateFieldGet(this, _Eventful_eventMap, "f");
+            const eventMap = this.#eventMap;
             if (!eventMap)
                 return;
             const callbacks = eventMap.get(eventName);
@@ -42,10 +32,10 @@ export function Eventful(Base = Object) {
             if (callbacks.length === 0)
                 eventMap.delete(eventName);
             if (eventMap.size === 0)
-                __classPrivateFieldSet(this, _Eventful_eventMap, null, "f");
+                this.#eventMap = null;
         }
         emit(eventName, data) {
-            const eventMap = __classPrivateFieldGet(this, _Eventful_eventMap, "f");
+            const eventMap = this.#eventMap;
             if (!eventMap)
                 return;
             const callbacks = eventMap.get(eventName);
@@ -61,8 +51,8 @@ export function Eventful(Base = Object) {
                 callback.call(context, data);
             }
         }
+        #eventMap;
     }
-    _Eventful_eventMap = new WeakMap(), _a = isEventful;
     Eventful.prototype[isEventful] = isEventful;
     return Eventful;
 }
@@ -78,7 +68,7 @@ Object.defineProperty(Eventful, Symbol.hasInstance, {
 });
 export function emits(eventName) {
     return (prototype, propName, descriptor) => {
-        return _emits(prototype, propName, descriptor !== null && descriptor !== void 0 ? descriptor : undefined, eventName);
+        return _emits(prototype, propName, descriptor ?? undefined, eventName);
     };
 }
 function _emits(prototype, propName, descriptor, eventName) {

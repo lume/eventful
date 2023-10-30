@@ -1,5 +1,11 @@
 import {Eventful} from './Eventful.js'
 
+// TODO move type def to @lume/cli, map @types/jest's `expect` type into the
+// global env.
+declare global {
+	function expect(...args: any[]): any
+}
+
 let eventCount = 0
 let eventCount2 = 0
 
