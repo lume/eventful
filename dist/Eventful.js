@@ -1,12 +1,6 @@
 export function Eventful(Base = Object) {
-    var _a;
     class Eventful extends Base {
-        constructor() {
-            super(...arguments);
-            this[_a] = isEventful;
-            this.#eventMap = null;
-        }
-        static { _a = isEventful; }
+        [isEventful] = isEventful;
         on(eventName, callback, context) {
             let eventMap = this.#eventMap;
             if (typeof callback !== 'function')
@@ -51,7 +45,7 @@ export function Eventful(Base = Object) {
                 callback.call(context, data);
             }
         }
-        #eventMap;
+        #eventMap = null;
     }
     Eventful.prototype[isEventful] = isEventful;
     return Eventful;
