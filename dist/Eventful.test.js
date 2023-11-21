@@ -95,6 +95,7 @@ describe('Eventful', () => {
             const o1 = {};
             const o2 = {};
             const callback = function (data) {
+                // the first two calls
                 if (data.n <= 1) {
                     if (data.n === 0) {
                         data.n++;
@@ -105,6 +106,7 @@ describe('Eventful', () => {
                         expect(this).toBe(o2);
                     }
                 }
+                // the 3rd and 4th calls
                 else {
                     data.n++;
                     expect(this).toBe(o2);
