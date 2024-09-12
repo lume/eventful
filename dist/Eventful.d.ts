@@ -1,4 +1,4 @@
-import type { Constructor } from 'lowclass';
+import type { Constructor } from 'lowclass/dist/Constructor.js';
 /**
  * @mixin
  * @class Eventful - An instance of Eventful emits events that code can

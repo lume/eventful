@@ -1,4 +1,4 @@
-import type {Constructor} from 'lowclass'
+import type {Constructor} from 'lowclass/dist/Constructor.js'
 
 // TODO, make strongly typed event args. Combine with stuff in Events.ts (or similar).
 
