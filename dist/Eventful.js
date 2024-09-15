@@ -1,10 +1,5 @@
-// TODO, make strongly typed event args. Combine with stuff in Events.ts (or similar).
-// TODO, Make sure emit will not attempt to call event handlers removed
-// during emit (in place modification of listeners array during emit iteration
-// will try to access undefined after the end of the array). Possibly use
-// for..of with a Set instead, otherwise modify the iteration index manually.
-// TODO, an option to defer events, and batch them (so that 3 of the
-// same event and payload triggers only one event instead of three)
+// TODO, come up with a pattern for event handler args to be typed.
+const isEventful = Symbol('isEventful');
 /**
  * @mixin
  * @class Eventful - An instance of Eventful emits events that code can
@@ -38,9 +33,13 @@
  * ```
  */
 export function Eventful(Base = Object) {
-    class Eventful extends Base {
-        // @ts-ignore to avoid "is using private name" errors in consumer code.
-        [isEventful] = isEventful;
+    return class Eventful extends Base {
+        // @ts-expect-error `as any` here to prevent errors in subclasses about "has or is using private name 'isEventful'"
+        [isEventful] = true;
+        // We're using Set here so that iteration of event handlers is
+        // impervious to items being deleted during iteration (i.e. during
+        // emit).
+        #eventMap = null;
         /**
          * @method on - Register a `callback` to be executed any
          * time an event with name `eventName` is triggered by an instance of
@@ -62,8 +61,8 @@ export function Eventful(Base = Object) {
                 eventMap = this.#eventMap = new Map();
             let callbacks = eventMap.get(eventName);
             if (!callbacks)
-                eventMap.set(eventName, (callbacks = []));
-            callbacks.push([callback, context]);
+                eventMap.set(eventName, (callbacks = new Set()));
+            callbacks.add([callback, context]);
         }
         /**
          * @method off - Stop a `callback` from being fired for event named `eventName`. If
@@ -81,11 +80,11 @@ export function Eventful(Base = Object) {
             const callbacks = eventMap.get(eventName);
             if (!callbacks)
                 return;
-            const index = callbacks.findIndex(tuple => tuple[0] === callback && tuple[1] === context);
-            if (index === -1)
+            const tuple = Array.from(callbacks).find(tuple => tuple[0] === callback && tuple[1] === context);
+            if (!tuple)
                 return;
-            callbacks.splice(index, 1);
-            if (callbacks.length === 0)
+            callbacks.delete(tuple);
+            if (callbacks.size === 0)
                 eventMap.delete(eventName);
             if (eventMap.size === 0)
                 this.#eventMap = null;
@@ -112,147 +111,19 @@ export function Eventful(Base = Object) {
             const callbacks = eventMap.get(eventName);
             if (!callbacks)
                 return;
-            let tuple;
-            let callback;
-            let context;
-            for (let i = 0, len = callbacks.length; i < len; i += 1) {
-                tuple = callbacks[i];
-                callback = tuple[0];
-                context = tuple[1];
+            for (const [callback, context] of new Set(callbacks))
                 callback.call(context, data);
-            }
         }
-        #eventMap = null;
-    }
-    Eventful.prototype[isEventful] = isEventful;
-    return Eventful;
+    };
 }
-const isEventful = Symbol('isEventful');
+// Use defineProperty instead of assignment because [Symbol.hasInstance] is writable:false
 Object.defineProperty(Eventful, Symbol.hasInstance, {
-    value(obj) {
-        if (!obj)
+    value(value) {
+        if (!value)
             return false;
-        if (obj[isEventful])
+        if (value[isEventful])
             return true;
         return false;
     },
 });
-/**
- * @decorator
- * @function emits - This is a decorator that when used on a property in a
- * class definition, causes setting of that property to emit the specified
- * event, with the event payload being the property value. This decorator must
- * be used in a class that extends from Eventful, otherwise an error is thrown.
- *
- * @example
- * class Foo {
- *   @emits('propchange') foo = 123
- * }
- * const f = new Foo
- * f.on('propchange', value => console.log('value: ', value))
- * f.foo = 456 // logs "value: 456"
- */
-export function emits(eventName) {
-    return (prototype, propName, descriptor) => {
-        return _emits(prototype, propName, descriptor ?? undefined, eventName);
-    };
-}
-function _emits(prototype, propName, descriptor, eventName) {
-    if (!(prototype instanceof Eventful))
-        throw new TypeError('The @emits decorator is only for use on properties of classes that extend from Eventful.');
-    const vName = Symbol('@emits: ' + propName);
-    // property decorators are not passed a descriptor (unlike decorators on accessors or methods)
-    let calledAsPropertyDecorator = false;
-    if (!descriptor) {
-        calledAsPropertyDecorator = true;
-        descriptor = Object.getOwnPropertyDescriptor(prototype, propName);
-    }
-    let hasOriginalAccessor = false;
-    let originalGet;
-    let originalSet;
-    let initialValue;
-    let writable;
-    if (descriptor) {
-        if (descriptor.get || descriptor.set) {
-            hasOriginalAccessor = true;
-            originalGet = descriptor.get;
-            originalSet = descriptor.set;
-            // reactivity requires both
-            if (!originalSet) {
-                console.warn('The `@emits` decorator was used on an accessor named "' +
-                    propName +
-                    '" which did not have a setter. This means an event will never be emitted because the value can not be set. In this case the decorator doesn\'t do anything.');
-                return;
-            }
-            delete descriptor.get;
-            delete descriptor.set;
-        }
-        else {
-            initialValue = descriptor.value;
-            writable = descriptor.writable;
-            // if it isn't writable, we don't need to make a reactive variable because
-            // the value won't change
-            if (!writable) {
-                console.warn('The `@emits` decorator was used on a property named "' +
-                    propName +
-                    '" that is not writable. An event can not be emitted because the property can not be modified. In this case the decorator does not do anything.');
-                return;
-            }
-            delete descriptor.value;
-            delete descriptor.writable;
-        }
-    }
-    let initialValueIsSet = false;
-    function emitEvent() {
-        this.emit(eventName, propName);
-    }
-    descriptor = {
-        ...descriptor,
-        configurable: true,
-        ...(hasOriginalAccessor
-            ? originalGet
-                ? {
-                    get() {
-                        return originalGet.call(this);
-                    },
-                }
-                : {}
-            : {
-                get() {
-                    if (!initialValueIsSet) {
-                        initialValueIsSet = true;
-                        return (this[vName] = initialValue);
-                    }
-                    return this[vName];
-                },
-            }),
-        ...(hasOriginalAccessor
-            ? {
-                set(newValue) {
-                    originalSet.call(this, newValue);
-                    // TODO should we defer the event, or not? Perhaps provide an option, and defer by default.
-                    Promise.resolve().then(emitEvent.bind(this));
-                    // emitEvent.call(this as Eventful)
-                },
-            }
-            : {
-                set(newValue) {
-                    if (!initialValueIsSet)
-                        initialValueIsSet = true;
-                    this[vName] = newValue;
-                    Promise.resolve().then(emitEvent.bind(this));
-                },
-            }),
-    };
-    // If a decorator is called on a property, then returning a descriptor does
-    // nothing, so we need to set the descriptor manually.
-    if (calledAsPropertyDecorator)
-        Object.defineProperty(prototype, propName, descriptor);
-    // If a decorator is called on an accessor or method, then we must return a
-    // descriptor in order to modify it, and doing it manually won't work.
-    else
-        return descriptor;
-    // Weird, huh?
-    // This will all change with updates to the ES decorators proposal, https://github.com/tc39/proposal-decorators
-}
 //# sourceMappingURL=Eventful.js.map
