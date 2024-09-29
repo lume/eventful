@@ -1,4 +1,4 @@
-import type { Constructor } from 'lowclass';
+import type { Constructor } from 'lowclass/dist/Constructor.js';
 /**
  * @mixin
  * @class Eventful - An instance of Eventful emits events that code can
@@ -33,6 +33,7 @@ import type { Constructor } from 'lowclass';
  */
 export declare function Eventful<T extends Constructor>(Base?: T): {
     new (...a: any[]): {
+        "__#1@#eventMap": Map<string, Set<[Function, any]>> | null;
         /**
          * @method on - Register a `callback` to be executed any
          * time an event with name `eventName` is triggered by an instance of
@@ -72,23 +73,6 @@ export declare function Eventful<T extends Constructor>(Base?: T): {
          * @param {data} any - The data that is passed to each callback subscribed to the event.
          */
         emit(eventName: string, data?: any): void;
-        "__#1@#eventMap": Map<string, Array<[Function, any]>> | null;
     };
 } & T;
-/**
- * @decorator
- * @function emits - This is a decorator that when used on a property in a
- * class definition, causes setting of that property to emit the specified
- * event, with the event payload being the property value. This decorator must
- * be used in a class that extends from Eventful, otherwise an error is thrown.
- *
- * @example
- * class Foo {
- *   @emits('propchange') foo = 123
- * }
- * const f = new Foo
- * f.on('propchange', value => console.log('value: ', value))
- * f.foo = 456 // logs "value: 456"
- */
-export declare function emits(eventName: string): any;
 //# sourceMappingURL=Eventful.d.ts.map
