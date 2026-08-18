@@ -2,7 +2,7 @@ import type {Constructor} from 'lowclass/dist/Constructor.js'
 
 // TODO, come up with a pattern for event handler args to be typed.
 
-const isEventful = Symbol('isEventful')
+const isInstance = Symbol('isInstance')
 
 /**
  * @mixin
@@ -37,9 +37,14 @@ const isEventful = Symbol('isEventful')
  * ```
  */
 export function Eventful<T extends Constructor>(Base: T = Object as any) {
+	if (Base.prototype instanceof Eventful)
+		throw new Error('Base class already extends Eventful, no need to apply the mixin again.')
+
 	return class Eventful extends Base {
-		// @ts-expect-error `as any` here to prevent errors in subclasses about "has or is using private name 'isEventful'"
-		[isEventful as any] = true
+		// Use `any` to prevent subclass "has or is using private name" errors.
+		get [isInstance as any]() {
+			return true
+		}
 
 		// We're using Set here so that iteration of event handlers is
 		// impervious to items being deleted during iteration (i.e. during
@@ -131,11 +136,10 @@ export function Eventful<T extends Constructor>(Base: T = Object as any) {
 	}
 }
 
-// Use defineProperty instead of assignment because [Symbol.hasInstance] is writable:false
-Object.defineProperty(Eventful, Symbol.hasInstance, {
-	value(value: any): boolean {
-		if (!value) return false
-		if (value[isEventful]) return true
-		return false
-	},
-})
+export type AnyEventful = InstanceType<ReturnType<typeof Eventful>>
+
+export function isAnyEventful(o: any): o is AnyEventful {
+	return o[isInstance]
+}
+
+Object.defineProperty(Eventful, Symbol.hasInstance, {value: isAnyEventful})

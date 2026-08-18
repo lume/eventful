@@ -1,5 +1,5 @@
 // TODO, come up with a pattern for event handler args to be typed.
-const isEventful = Symbol('isEventful');
+const isInstance = Symbol('isInstance');
 /**
  * @mixin
  * @class Eventful - An instance of Eventful emits events that code can
@@ -33,9 +33,13 @@ const isEventful = Symbol('isEventful');
  * ```
  */
 export function Eventful(Base = Object) {
+    if (Base.prototype instanceof Eventful)
+        throw new Error('Base class already extends Eventful, no need to apply the mixin again.');
     return class Eventful extends Base {
-        // @ts-expect-error `as any` here to prevent errors in subclasses about "has or is using private name 'isEventful'"
-        [isEventful] = true;
+        // Use `any` to prevent subclass "has or is using private name" errors.
+        get [isInstance]() {
+            return true;
+        }
         // We're using Set here so that iteration of event handlers is
         // impervious to items being deleted during iteration (i.e. during
         // emit).
@@ -116,14 +120,8 @@ export function Eventful(Base = Object) {
         }
     };
 }
-// Use defineProperty instead of assignment because [Symbol.hasInstance] is writable:false
-Object.defineProperty(Eventful, Symbol.hasInstance, {
-    value(value) {
-        if (!value)
-            return false;
-        if (value[isEventful])
-            return true;
-        return false;
-    },
-});
+export function isAnyEventful(o) {
+    return o[isInstance];
+}
+Object.defineProperty(Eventful, Symbol.hasInstance, { value: isAnyEventful });
 //# sourceMappingURL=Eventful.js.map

@@ -75,4 +75,6 @@ export declare function Eventful<T extends Constructor>(Base?: T): {
         emit(eventName: string, data?: any): void;
     };
 } & T;
+export type AnyEventful = InstanceType<ReturnType<typeof Eventful>>;
+export declare function isAnyEventful(o: any): o is AnyEventful;
 //# sourceMappingURL=Eventful.d.ts.map
