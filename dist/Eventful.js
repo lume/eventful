@@ -121,7 +121,7 @@ export function Eventful(Base = Object) {
     };
 }
 export function isAnyEventful(o) {
-    return o[isInstance];
+    return Boolean(o && o[isInstance]);
 }
 Object.defineProperty(Eventful, Symbol.hasInstance, { value: isAnyEventful });
 //# sourceMappingURL=Eventful.js.map

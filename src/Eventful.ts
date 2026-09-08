@@ -139,7 +139,7 @@ export function Eventful<T extends Constructor>(Base: T = Object as any) {
 export type AnyEventful = InstanceType<ReturnType<typeof Eventful>>
 
 export function isAnyEventful(o: any): o is AnyEventful {
-	return o[isInstance]
+	return Boolean(o && o[isInstance])
 }
 
 Object.defineProperty(Eventful, Symbol.hasInstance, {value: isAnyEventful})
